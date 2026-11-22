@@ -195,7 +195,7 @@ const CUTE = [
 // ---------- Home screen
 const GROUPS = [['👧 Girls', GIRLS], ['🐼 Cute animals', CUTE], ['🐱 Animals, nature & more', THINGS], ['⭐ Advanced (for big kids)', ADV], ['🧊 3D drawing (perspective & isometric)', SOLID]];
 ITEMS = GROUPS.flatMap(([, list]) => list);
+// Cards start empty. The picture is drawn only when the card scrolls near the screen (see more.js).
 const card = g => `<button class="pick" onclick="open_(${ITEMS.indexOf(g)})">
-  <svg viewBox="0 0 300 360" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${finished(g)}</svg>
+  <svg viewBox="0 0 300 360" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" data-i="${ITEMS.indexOf(g)}"></svg>
   <b>${g.name}</b><span>${g.style}</span></button>`;
-$('grid').innerHTML = GROUPS.map(([title, list]) => `<h2 class="group">${title}</h2><div class="grid">${list.map(card).join('')}</div>`).join('');
