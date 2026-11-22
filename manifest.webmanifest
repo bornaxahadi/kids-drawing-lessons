@@ -1,0 +1,17 @@
+{
+ "name": "Draw with Dayan",
+ "short_name": "Draw",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#f3ead7",
+ "theme_color": "#f3ead7",
+ "icons": [
+  {
+   "src": "icon.png",
+   "sizes": "180x180",
+   "type": "image/png"
+  }
+ ]
+}
