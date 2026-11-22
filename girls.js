@@ -306,13 +306,27 @@ function go(i) {
   $('title').textContent = s.t;
   $('tip').textContent = s.tip;
   $('back').disabled = step === 0;
-  $('next').textContent = last ? '🏠 More girls' : 'Next ➡️';
+  $('next').textContent = last ? '🏠 More' : 'Next ➡️';
   $('dots').innerHTML = steps.map((_, j) =>
     `<button class="dot ${j < step ? 'done' : j === step ? 'now' : ''}" aria-label="Step ${j + 1}" onclick="go(${j})"></button>`).join('');
 }
 $('next').onclick = () => step === steps.length - 1 ? $('homeBtn').onclick() : go(step + 1);
 $('back').onclick = () => go(Math.max(0, step - 1));
 $('replay').onclick = playDemo;
+
+// Big picture: drawing fills the screen. Remembered, and uses real full screen where the browser allows it.
+const root = document.documentElement;
+const setBig = on => {
+  $('lesson').classList.toggle('big', on); $('bigBtn').classList.toggle('on', on);
+  try { localStorage.setItem('dayan-big', on ? '1' : '0'); } catch {}
+  try {
+    if (on && !document.fullscreenElement) (root.requestFullscreen || root.webkitRequestFullscreen)?.call(root)?.catch?.(() => {});
+    if (!on && document.fullscreenElement) document.exitFullscreen?.();
+  } catch {}
+};
+$('bigBtn').onclick = () => setBig(!$('lesson').classList.contains('big'));
+let wantBig = true; try { wantBig = localStorage.getItem('dayan-big') !== '0'; } catch {}
+$('lesson').classList.toggle('big', wantBig); $('bigBtn').classList.toggle('on', wantBig);
 
 function party() {
   const p = document.createElement('div'); p.className = 'party';
