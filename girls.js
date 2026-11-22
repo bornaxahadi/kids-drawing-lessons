@@ -30,7 +30,8 @@ const TPL = {
 // ---------- Eyes (with colored middles and eyebrows), nose, mouth
 const INK = '#2a1a33';
 const LINE = '#3b3b44'; // graphite pencil
-const pencilG = s => `<g filter="url(#pencil)">${s}</g>`, markerG = s => `<g filter="url(#marker)" opacity=".93">${s}</g>`;
+let NOFX = false; // thumbnails skip the pencil/marker filters: much faster on an iPad
+const pencilG = s => NOFX ? s : `<g filter="url(#pencil)">${s}</g>`, markerG = s => NOFX ? s : `<g filter="url(#marker)" opacity=".93">${s}</g>`;
 function EYES(T, kind, iris) {
   const y = T.ey, r = T.er, both = f => f(150 - T.edx, -1) + f(150 + T.edx, 1);
   const brow = (x, s, lift) => `<path d="M${x - 12} ${y - lift} Q${x + s * 2} ${y - lift - 7} ${x + 12} ${y - lift}"/>`;
@@ -262,8 +263,33 @@ function finished(g) {
 // (Advanced: each part gets a white fill so lines behind it are hidden, just like on paper.)
 const partial = (g, i) => pencilG(g.adv ? layered(g, i, (s, j) => (g.keepFill ? (s.back || '') + (s.front || '') : ((s.back || '') + (s.front || '')).replace(/fill="[^"]*"/g, 'fill="#fffef9"')) + `<g class="${j === i ? 'new' : 'old'}">${s.svg}</g>`) : g.steps.slice(0, i + 1).map((s, j) => `<g class="${j === i ? 'new' : 'old'}">${s.svg}</g>`).join(''));
 
+// ---------- Sound: a soft pencil scratch while drawing, a tick on buttons, a chime at the end. Made live, no files to download.
+let AC = null, soundOn = true; try { soundOn = localStorage.getItem('dayan-sound') !== '0'; } catch {}
+function ac() { if (!AC) { const C = window.AudioContext || window.webkitAudioContext; if (C) AC = new C(); } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+const sfx = (() => {
+  let NB = null, src = null, gain = null, filt = null;
+  const ready = () => (soundOn ? ac() : null);
+  const noise = c => { if (!NB) { NB = c.createBuffer(1, c.sampleRate * 2, c.sampleRate); const d = NB.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } return NB; };
+  function tone(freq, delay, dur, type, vol) { const c = ready(); if (!c) return; const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + delay;
+    o.type = type; o.frequency.value = freq; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + .05); }
+  return {
+    startPencil() { const c = ready(); if (!c || src) return;
+      src = c.createBufferSource(); src.buffer = noise(c); src.loop = true;
+      filt = c.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = 2600; filt.Q.value = .7;
+      gain = c.createGain(); gain.gain.value = 0; src.connect(filt); filt.connect(gain); gain.connect(c.destination); src.start(); },
+    pencilLevel(v, f) { if (!gain || !AC) return; const t = AC.currentTime; gain.gain.setTargetAtTime(v, t, .03); filt.frequency.setTargetAtTime(f, t, .03); },
+    stopPencil() { if (!src) return; const s = src, g = gain; src = gain = filt = null; try { g.gain.setTargetAtTime(0, AC.currentTime, .03); s.stop(AC.currentTime + .2); } catch {} },
+    click() { tone(660, 0, .07, 'sine', .07); },
+    chime() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * .13, .5, 'triangle', .1)); },
+  };
+})();
+// Browsers only allow sound after a tap, so the first tap on a button wakes it up.
+addEventListener('click', e => { if (e.target.closest && e.target.closest('button')) { ac(); sfx.click(); } }, true);
+
 // ---------- Lesson (the home screen is built in things.js, after all pictures exist)
 const demo = $('demo');
+const plain = s => s.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '').replace(/\s+([.!?,])/g, '$1').replace(/\s{2,}/g, ' ').trim();
 let ITEMS = GIRLS, cur, steps, step = 0, anim = 0;
 function open_(i) {
   cur = ITEMS[i]; steps = [...cur.steps, cur.tpl ? FINAL : { ...FINAL, t:'Color it in!', tip:'Now color it with your crayons. You did it, Dayan! 🌟' }];
@@ -271,26 +297,30 @@ function open_(i) {
   $('who').textContent = `Let's draw ${cur.tpl ? cur.name : 'a ' + cur.name.toLowerCase()}!`;
   go(0);
 }
-$('homeBtn').onclick = () => { cancelAnimationFrame(anim); $('lesson').hidden = true; $('home').hidden = false; scrollTo(0, 0); };
+$('homeBtn').onclick = () => { cancelAnimationFrame(anim); sfx.stopPencil(); $('lesson').hidden = true; $('home').hidden = false; scrollTo(0, 0); };
 
 // A pencil travels along each new line, one after another, drawing it.
 function playDemo() {
-  cancelAnimationFrame(anim);
+  cancelAnimationFrame(anim); sfx.stopPencil();
   const last = step === steps.length - 1;
   demo.innerHTML = (last ? finished(cur) : partial(cur, step)) +
     `<g id="pencil" style="display:none" stroke="none"><g transform="rotate(-45) scale(1.3)">
       <polygon points="0,0 10,-4 10,4" fill="#f1d3a3"/><polygon points="0,0 3.5,-1.4 3.5,1.4" fill="#e0457b"/>
       <rect x="10" y="-4" width="34" height="8" fill="#e8b93a"/><rect x="10" y="-4" width="34" height="2" fill="#f6d366"/><rect x="44" y="-4" width="6" height="8" rx="1.5" fill="#d9d4cc"/></g></g>`;
-  if (last) return party();
+  demo.classList.remove('anim');
+  if (last) { sfx.chime(); return party(); }
+  sfx.startPencil();
+  demo.classList.add('anim'); // no pencil filter while the pencil is moving: smooth on iPad, texture appears when it stops
   const lines = [...demo.querySelectorAll('.new > :is(path, circle, ellipse)')];
   const pencil = $('pencil');
   lines.forEach(el => { const L = el.getTotalLength(); el.style.strokeDasharray = L; el.style.strokeDashoffset = L; el._len = L; });
   let i = 0, t0 = performance.now() + 300;
   const frame = now => {
-    const el = lines[i]; if (!el) { pencil.style.display = 'none'; return; }
+    const el = lines[i]; if (!el) { pencil.style.display = 'none'; demo.classList.remove('anim'); sfx.stopPencil(); return; }
     const dur = Math.max(900, Math.min(3200, el._len * 11)), k = Math.max(0, Math.min(1, (now - t0) / dur));
     const d = el._len * (k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2); // ease in-out
     el.style.strokeDashoffset = el._len - d;
+    sfx.pencilLevel(k > 0 && k < 1 ? .035 + Math.random() * .05 : 0, 1800 + Math.random() * 2400);
     const p = el.getPointAtLength(d), tm = el.transform.baseVal.consolidate();
     const pt = tm ? p.matrixTransform(tm.matrix) : p; // follow rotated shapes too
     pencil.style.display = ''; pencil.setAttribute('transform', `translate(${pt.x} ${pt.y})`);
@@ -305,34 +335,26 @@ function go(i) {
   playDemo();
   const s = steps[step], last = step === steps.length - 1;
   $('num').textContent = `Step ${step + 1} of ${steps.length}`;
-  $('title').textContent = s.t;
-  $('tip').textContent = s.tip;
+  $('title').textContent = plain(s.t);
+  $('tip').textContent = plain(s.tip);
   $('back').disabled = step === 0;
-  $('next').textContent = last ? '🏠 More' : 'Next ➡️';
+  $('next').textContent = last ? 'Home' : 'Next →';
   $('dots').innerHTML = steps.map((_, j) =>
     `<button class="dot ${j < step ? 'done' : j === step ? 'now' : ''}" aria-label="Step ${j + 1}" onclick="go(${j})"></button>`).join('');
 }
 $('next').onclick = () => step === steps.length - 1 ? $('homeBtn').onclick() : go(step + 1);
 $('back').onclick = () => go(Math.max(0, step - 1));
 $('replay').onclick = playDemo;
+const syncSound = () => { $('soundBtn').classList.toggle('off', !soundOn); $('soundBtn').setAttribute('aria-pressed', String(soundOn)); };
+$('soundBtn').onclick = () => { soundOn = !soundOn; try { localStorage.setItem('dayan-sound', soundOn ? '1' : '0'); } catch {} if (!soundOn) sfx.stopPencil(); syncSound(); };
+syncSound();
 
-// Big picture: drawing fills the screen. Remembered, and uses real full screen where the browser allows it.
-const root = document.documentElement;
-const setBig = on => {
-  $('lesson').classList.toggle('big', on); $('bigBtn').classList.toggle('on', on);
-  try { localStorage.setItem('dayan-big', on ? '1' : '0'); } catch {}
-  try {
-    if (on && !document.fullscreenElement) (root.requestFullscreen || root.webkitRequestFullscreen)?.call(root)?.catch?.(() => {});
-    if (!on && document.fullscreenElement) document.exitFullscreen?.();
-  } catch {}
-};
-$('bigBtn').onclick = () => setBig(!$('lesson').classList.contains('big'));
-let wantBig = true; try { wantBig = localStorage.getItem('dayan-big') !== '0'; } catch {}
-$('lesson').classList.toggle('big', wantBig); $('bigBtn').classList.toggle('on', wantBig);
+// The drawing always gets the whole screen (slim side panel).
+$('lesson').classList.add('big');
 
-function party() {
+function party() { // a few pencil-colored stars, no emoji
   const p = document.createElement('div'); p.className = 'party';
-  p.innerHTML = Array.from({ length: 24 }, () =>
-    `<span style="left:${Math.random() * 100}%;animation-delay:${Math.random()}s">${['🌟', '🎀', '💖', '🌸', '🎉'][Math.floor(Math.random() * 5)]}</span>`).join('');
-  document.body.appendChild(p); setTimeout(() => p.remove(), 4000);
+  p.innerHTML = Array.from({ length: 16 }, () =>
+    `<span style="left:${Math.random() * 100}%;animation-delay:${Math.random()}s;color:${['#a8504a', '#8a6a4a', '#4a5f7a', '#6b7a4a'][Math.floor(Math.random() * 4)]}">${['★', '✦', '✿'][Math.floor(Math.random() * 3)]}</span>`).join('');
+  document.body.appendChild(p); setTimeout(() => p.remove(), 3500);
 }
