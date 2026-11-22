@@ -384,6 +384,133 @@ const TEX = illu('Texture sampler', '#fff3d6', [
   S('Fluffy fur', 'Lots of short little lines, like tiny hairs, all pointing down.', `<path d="${fur(SW[5])}"/>`)]);
 ILLU.push(TEX);
 
+// ---------- More optical illusions (classic geometry: lines, boxes, circles)
+// Zollner: parallel lines with slanted ticks look like they lean.
+const ZY = [70, 115, 160, 205, 250, 295];
+const zLines = ZY.map(y => `M30 ${y} H270`).join(' ');
+const zTicks = idx => idx.map(i => { let d = ''; for (let x = 42; x < 262; x += 16) d += i % 2 ? `M${x + 5} ${ZY[i] - 9} l-10 18 ` : `M${x - 5} ${ZY[i] - 9} l10 18 `; return d; }).join('');
+// Hermann grid: black squares with white lanes. Gray dots seem to appear at the crossroads.
+const HG = []; for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) HG.push([34 + c * 62, 64 + r * 62]);
+const hgSq = list => list.map(([x, y]) => `M${x} ${y} h48 v48 h-48Z`).join(' ');
+// Moire: two sets of rings on top of each other.
+const rings = (cx, cy) => Array.from({ length: 12 }, (_, i) => { const r = 8 + i * 8; return `M${cx - r} ${cy} a${r} ${r} 0 1 0 ${2 * r} 0 a${r} ${r} 0 1 0 ${-2 * r} 0`; }).join(' ');
+// Striped ball: curved lines that bow like a globe.
+const BT = Array.from({ length: 11 }, (_, i) => -1 + i * .2);
+const ballLine = t => Array.from({ length: 25 }, (_, k) => { const u = -1 + k / 12, rx = 105 * Math.sqrt(Math.max(0, 1 - t * t)); return [150 + rx * u, 180 + 105 * t + 26 * t * Math.sqrt(1 - u * u)]; });
+const ballBand = i => plZ([...ballLine(BT[i]), ...ballLine(BT[i + 1]).slice().reverse()]);
+// Necker cube: two squares joined at the corners. Which face is in front?
+const NA = [[70, 150], [190, 150], [190, 270], [70, 270]], NB = NA.map(([x, y]) => [x + 50, y - 50]);
+// Tumbling blocks: three-tone rhombuses that look like stacked cubes.
+const TBs = 26, TBc = []; for (let r = 0; r < 7; r++) for (let c = 0; c < (r % 2 ? 5 : 6); c++) TBc.push([34 + c * 1.732 * TBs + (r % 2 ? .866 * TBs : 0) + 12, 52 + r * 1.5 * TBs]);
+const TBr = ([cx, cy]) => { const s = TBs, h = .866 * s; return { t: plZ([[cx, cy - s], [cx + h, cy - s / 2], [cx, cy], [cx - h, cy - s / 2]]), l: plZ([[cx - h, cy - s / 2], [cx, cy], [cx, cy + s], [cx - h, cy + s / 2]]), r: plZ([[cx, cy], [cx + h, cy - s / 2], [cx + h, cy + s / 2], [cx, cy + s]]) }; };
+const tb = list => { const o = { t: '', l: '', r: '' }; list.forEach(c => { const x = TBr(c); o.t += x.t + ' '; o.l += x.l + ' '; o.r += x.r + ' '; }); return o; };
+const tbCol = o => `<path fill="#ffe08a" d="${o.t}"/><path fill="#ff9ec7" d="${o.l}"/><path fill="#8fd3ff" d="${o.r}"/>`;
+ILLU.push(
+  illu('Tumbling blocks', '#fff3d6', [
+    S('One cube', 'Draw a flat-top hexagon with a ruler, then a "Y" inside it that touches the middle. That is a cube seen from the corner!', `<path d="${tb([TBc[8]]).t} ${tb([TBc[8]]).l} ${tb([TBc[8]]).r}"/>`, tbCol(tb([TBc[8]]))),
+    S('A row of cubes', 'Add cubes next to it with no gaps. Their sides share lines!', `<path d="${(() => { const o = tb(TBc.slice(0, 6)); return o.t + o.l + o.r; })()}"/>`, tbCol(tb(TBc.slice(0, 6)))),
+    S('More rows', 'Start every second row half a cube over. Keep going down the page!', `<path d="${(() => { const o = tb(TBc); return o.t + o.l + o.r; })()}"/>`, tbCol(tb(TBc))),
+    S('Color 3 tones', 'Top = yellow, left = pink, right = blue, every time. Now it looks like stairs and boxes in 3D! 🤯', `<path d="${(() => { const o = tb(TBc); return o.t + o.l + o.r; })()}"/>`, tbCol(tb(TBc)))]),
+  illu('Striped ball', '#ffe6f0', [
+    S('Circle', 'Draw a big circle.', '<circle cx="150" cy="180" r="105"/>'),
+    S('Curvy lines (top)', 'Draw curved lines across the top half. They bend UP at the edges, like a globe. The higher, the more curved.', `<path d="${BT.slice(1, 5).map(t => pl(ballLine(t))).join(' ')}"/>`),
+    S('Curvy lines (bottom)', 'Now the bottom half. They bend DOWN. The middle line is straight!', `<path d="${BT.slice(5, 10).map(t => pl(ballLine(t))).join(' ')}"/>`),
+    S('Color stripes', 'Color every other stripe. The flat paper turns into a round ball! 🤯', `<circle cx="150" cy="180" r="105"/><path d="${BT.slice(1, 10).map(t => pl(ballLine(t))).join(' ')}"/>`, Array.from({ length: 10 }, (_, i) => i % 2 ? '' : `<path fill="#e8507e" d="${ballBand(i)}"/>`).join(''))]),
+  illu('Moire rings', '#e6f4ff', [
+    S('Rings on the left', 'Draw 12 circles inside each other, with the same gap each time. Start in the middle and grow!', `<path d="${rings(110, 180)}"/>`),
+    S('Rings on the right', 'Now draw another set of rings, starting a little to the right. Where they cross, a new pattern appears!', `<path d="${rings(190, 180)}"/>`)]),
+  illu('Hermann grid', '#f0f0f0', [
+    S('Top row', 'Draw 4 squares in a row with wide gaps between them. Color them dark.', `<path d="${hgSq(HG.slice(0, 4))}"/>`, `<path fill="${DK}" d="${hgSq(HG.slice(0, 4))}"/>`),
+    S('More rows', 'Make 3 more rows underneath. Keep the white gaps the same everywhere!', `<path d="${hgSq(HG.slice(4))}"/>`, `<path fill="${DK}" d="${hgSq(HG.slice(4))}"/>`),
+    S('Look carefully', 'Look at the white crossroads: do you see little gray dots? They are not there! Your eyes trick you. 🤯', `<path d="${hgSq(HG)}"/>`, `<path fill="${DK}" d="${hgSq(HG)}"/>`)]),
+  illu('Slanted lines', '#fff0f5', [
+    S('Straight lines', 'Draw 6 long straight lines across, the same distance apart. Use a ruler!', `<path d="${zLines}"/>`),
+    S('Ticks on 1, 3, 5', 'On lines 1, 3 and 5, draw little slanted lines crossing them, all leaning the same way.', `<path d="${zTicks([0, 2, 4])}"/>`),
+    S('Ticks on 2, 4, 6', 'On the other lines, lean the little lines the OTHER way. Now your straight lines look tilted! 🤯', `<path d="${zTicks([1, 3, 5])}"/>`)]),
+  illu('Flipping cube', '#e6fff6', [
+    S('Front square', 'Draw a square with a ruler.', `<path d="${plZ(NA)}"/>`),
+    S('Back square', 'Draw a second square, the same size, a bit up and to the right. They overlap.', `<path d="${plZ(NB)}"/>`),
+    S('Join corners', 'Connect each corner of one square to the matching corner of the other. A see-through cube!', `<path d="${NA.map((a, i) => seg(a, NB[i])).join(' ')}"/>`),
+    S('Which is in front?', 'Stare at it. Sometimes the first square is in front, sometimes the other one. It flips! 🤯 Color a face to help your brain choose.', `<path d="${plZ(NA)} ${plZ(NB)} ${NA.map((a, i) => seg(a, NB[i])).join(' ')}"/>`, `<path fill="#bfe8ff" d="${plZ(NA)}"/>`)]),
+);
+
+// ---------- Even more illusions and illusion textures
+const BR = '#8a6a4a', TAN = '#d9b98a';
+// Kanizsa triangle: three "pac-man" circles make a white triangle appear that is not there.
+const KV = [[150, 92], [66, 236], [234, 236]], KC = [150, 188];
+const pac = ([cx, cy], r = 38) => { const dir = Math.atan2(KC[1] - cy, KC[0] - cx), p = d => `${(cx + r * Math.cos(dir + d * Math.PI / 180)).toFixed(1)} ${(cy + r * Math.sin(dir + d * Math.PI / 180)).toFixed(1)}`; return `M${cx} ${cy} L${p(30)} A${r} ${r} 0 1 1 ${p(330)}Z`; };
+const circ = ([cx, cy], r = 38) => `M${cx - r} ${cy} a${r} ${r} 0 1 0 ${2 * r} 0 a${r} ${r} 0 1 0 ${-2 * r} 0`;
+// Ponzo: railway lines make the far bar look longer.
+const rail = y => [150 - 110 * (y - 50) / 270, 150 + 110 * (y - 50) / 270];
+// Muller-Lyer: arrows or tails change how long a line looks.
+const mlA = y => `M60 ${y} H240 M60 ${y} l20 -20 M60 ${y} l20 20 M240 ${y} l-20 -20 M240 ${y} l-20 20`, mlB = y => `M60 ${y} H240 M60 ${y} l-20 -20 M60 ${y} l-20 20 M240 ${y} l20 -20 M240 ${y} l20 20`;
+// Line cylinder, wavy checkerboard
+const cyArc = y => `M70 ${y} A80 26 0 0 0 230 ${y}`;
+const cyBand = (y1, y2) => `M70 ${y1} A80 26 0 0 0 230 ${y1} V${y2} A80 26 0 0 1 70 ${y2}Z`;
+const warp = (x, y) => [x + 8 * Math.sin(y / 22), y + 8 * Math.sin(x / 22)];
+const wLine = (x0, y0, x1, y1) => pl(Array.from({ length: 17 }, (_, k) => warp(x0 + (x1 - x0) * k / 16, y0 + (y1 - y0) * k / 16)));
+const WCH = (() => { const x0 = 38, y0 = 66, s = 28, N = 8, v = [], h = [], cells = [];
+  for (let i = 0; i <= N; i++) { v.push(wLine(x0 + i * s, y0, x0 + i * s, y0 + N * s)); h.push(wLine(x0, y0 + i * s, x0 + N * s, y0 + i * s)); }
+  const edge = (ax, ay, bx, by) => Array.from({ length: 5 }, (_, k) => warp(ax + (bx - ax) * k / 4, ay + (by - ay) * k / 4));
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if ((i + j) % 2 === 0) { const xa = x0 + i * s, ya = y0 + j * s, xb = xa + s, yb = ya + s; cells.push(plZ([...edge(xa, ya, xb, ya), ...edge(xb, ya, xb, yb).slice(1), ...edge(xb, yb, xa, yb).slice(1), ...edge(xa, yb, xa, ya).slice(1, -1)])); }
+  return { v: v.join(' '), h: h.join(' '), cells: cells.join(' ') }; })();
+// Basket weave
+const BW = (() => { const s = 48, x0 = 30, y0 = 54, grid = [], hor = [], ver = [], hf = [], vf = [];
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) { const x = x0 + c * s, y = y0 + r * s; grid.push(`M${x} ${y} h${s} v${s} h${-s}Z`);
+    for (let k = 0; k < 3; k++) { if ((r + c) % 2 === 0) { const d = `M${x + 3} ${y + 3 + k * 14} h42 v11 h-42Z`; hor.push(d); } else { const d = `M${x + 3 + k * 14} ${y + 3} h11 v42 h-11Z`; ver.push(d); } } }
+  return { grid: grid.join(' '), hor: hor.join(' '), ver: ver.join(' ') }; })();
+// Fish scales
+const SCL = (() => { const rows = []; for (let r = 0; r < 11; r++) { const row = []; for (let c = 0; c < (r % 2 ? 6 : 7); c++) row.push([22 + c * 44 + (r % 2 ? 22 : 0), 62 + r * 22]); rows.push(row); } return rows; })();
+const sclArc = row => row.map(([x, y]) => `M${x - 22} ${y} a22 22 0 0 0 44 0`).join(' ');
+const sclFill = () => SCL.map((row, r) => ({ row, r })).reverse().map(({ row, r }) => row.map(([x, y]) => `<circle fill="${r % 2 ? '#e6efe6' : '#bcd9c8'}" cx="${x}" cy="${y}" r="22"/>`).join('')).join('');
+// Argyle diamonds
+const AR = { x: 33, y: 70, w: 220, h: 220 };
+const arDia = (() => { const out = [[], []]; for (let a = 1; a <= 9; a++) for (let b = 1; b <= 9; b++) if ((a + b) % 2) { const cx = AR.x + 22 * a, cy = AR.y + 22 * b; out[((a + b - 1) / 2) % 2].push(`M${cx} ${cy - 22} L${cx + 22} ${cy} L${cx} ${cy + 22} L${cx - 22} ${cy}Z`); } return out.map(l => l.join(' ')); })();
+// Chevron zigzags
+const zig = k => pl(Array.from({ length: 9 }, (_, i) => [30 + i * 30, 66 + k * 24 + (i % 2 ? 22 : 0)]));
+const zigBand = k => plZ([...Array.from({ length: 9 }, (_, i) => [30 + i * 30, 66 + k * 24 + (i % 2 ? 22 : 0)]), ...Array.from({ length: 9 }, (_, i) => [30 + (8 - i) * 30, 66 + (k + 1) * 24 + ((8 - i) % 2 ? 22 : 0)])]);
+ILLU.push(
+  illu('Magic triangle', '#fff0f5', [
+    S('Three circles', 'Draw 3 circles in a triangle shape, far apart from each other.', `<path d="${KV.map(c => circ(c)).join(' ')}"/>`),
+    S('Cut out slices', 'Cut a pie slice out of each circle. All three slices must point at the middle of the paper. Then color the rest dark.', `<path d="${KV.map(c => pac(c)).join(' ')}"/>`, KV.map(c => `<circle fill="#fffef9" cx="${c[0]}" cy="${c[1]}" r="39"/>`).join('') + `<path fill="${DK}" d="${KV.map(c => pac(c)).join(' ')}"/>`),
+    S('Look at the middle', 'Do you see a bright white triangle floating on top? There is no triangle! Your brain makes it. 🤯', `<path d="${KV.map(c => pac(c)).join(' ')}"/>`, `<path fill="${DK}" d="${KV.map(c => pac(c)).join(' ')}"/>`)]),
+  illu('Railway trick', '#f0f0f0', [
+    S('Tracks', 'Two long lines starting from one point at the top, getting further apart. Like railway tracks going far away!', '<path d="M150 50 L40 320 M150 50 L260 320"/>'),
+    S('Sleepers', 'Draw lines across the tracks, closer together at the top.', `<path d="${[100, 130, 175, 230, 300].map(y => `M${rail(y)[0].toFixed(1)} ${y} H${rail(y)[1].toFixed(1)}`).join(' ')}"/>`),
+    S('Two bars', 'Draw two flat bars the SAME length: one high up and one low down. Which looks longer? Measure with a ruler! 🤯', '<path d="M122 120 h56 v10 h-56Z M122 250 h56 v10 h-56Z"/>', `<path fill="#a8504a" d="M122 120 h56 v10 h-56Z M122 250 h56 v10 h-56Z"/>`)]),
+  illu('Arrow lines', '#fff3d6', [
+    S('Two lines', 'Draw two lines the exact same length with a ruler. One above the other.', '<path d="M60 120 H240 M60 240 H240"/>'),
+    S('Arrow ends', 'Top line: add arrow tips pointing OUT at both ends.', `<path d="${mlA(120)}"/>`),
+    S('Tail ends', 'Bottom line: add fins pointing the OTHER way. Now the bottom line looks longer, but both are equal! 🤯', `<path d="${mlB(240)}"/>`)]),
+  illu('Line tube', '#e6f4ff', [
+    S('Top oval', 'Draw a wide flat oval for the top of a tube.', '<ellipse cx="150" cy="90" rx="80" ry="26"/>'),
+    { ...S('Sides and bottom', 'Two straight lines down, then a curve at the bottom that bends the same way as the oval.', '<path d="M70 90 V290 M230 90 V290"/><path d="M70 290 A80 26 0 0 0 230 290"/>', `<path fill="#f3e6c8" d="M70 90 V290 A80 26 0 0 0 230 290 V90Z"/>`), under: true },
+    S('Curved stripes', 'Draw curves across the tube, evenly spaced. Every curve bends down, like the bottom! It looks round now.', `<path d="${[130, 170, 210, 250].map(cyArc).join(' ')}"/>`),
+    S('Color the bands', 'Color every other band. A flat paper tube pops out in 3D! 🤯', `<ellipse cx="150" cy="90" rx="80" ry="26"/><path d="${[130, 170, 210, 250].map(cyArc).join(' ')}"/>`,
+      `<path fill="${BR}" d="${cyBand(130, 170)} ${cyBand(210, 250)}"/>`)]),
+  illu('Wavy checkers', '#fff3d6', [
+    S('Wavy lines up and down', 'Draw 9 lines from top to bottom that wiggle gently, like a snake. All wiggle the same way!', `<path d="${WCH.v}"/>`),
+    S('Wavy lines across', 'Draw 9 wiggly lines from left to right, crossing the first ones.', `<path d="${WCH.h}"/>`),
+    S('Color the squares', 'Color every other square dark, like a chessboard. The board looks like it is rippling! 🤯', `<path d="${WCH.v} ${WCH.h}"/>`, `<path fill="${DK}" d="${WCH.cells}"/>`)]),
+  illu('Basket weave', '#fff3d6', [
+    S('Square grid', 'Draw a grid of big squares, 5 across and 5 down.', `<path d="${BW.grid}"/>`),
+    S('Flat bars', 'In every other square, draw 3 bars lying flat (left to right).', `<path d="${BW.hor}"/>`, `<path fill="${TAN}" d="${BW.hor}"/>`),
+    S('Standing bars', 'In the other squares, draw 3 bars standing up (up and down). It starts to look woven!', `<path d="${BW.ver}"/>`, `<path fill="${BR}" d="${BW.ver}"/>`)]),
+  illu('Fish scales', '#e6f4ff', [
+    S('First row', 'Draw a row of little "u" shapes, side by side, all the same size.', `<path d="${sclArc(SCL[0])}"/>`),
+    S('Next row', 'Start the next row half a scale over, a bit lower. The "u"s fit in the gaps!', `<path d="${sclArc(SCL[1])}"/>`),
+    S('More rows', 'Keep going down the page.', `<path d="${SCL.slice(2).map(sclArc).join(' ')}"/>`),
+    S('Color the scales', 'Color every other row in a different shade. Now they look like real overlapping scales!', `<path d="${SCL.map(sclArc).join(' ')}"/>`, sclFill())]),
+  illu('Diamonds', '#fff0f5', [
+    S('Slanted lines one way', 'Draw slanted lines down to the right, all the same distance apart.', `<path d="${diag(AR, 44, 1)}"/>`),
+    S('Slanted the other way', 'Now slanted lines down to the left. They cross and make diamonds!', `<path d="${diag(AR, 44, -1)}"/>`),
+    S('Color the diamonds', 'Color diamonds in diagonal stripes: dark, light, dark, light. A classic argyle pattern!', `<path d="${diag(AR, 44, 1)} ${diag(AR, 44, -1)}"/>`, `<path fill="${BR}" d="${arDia[1]}"/>`)]),
+  illu('Zigzag stripes', '#fff3d6', [
+    S('One zigzag', 'Draw a zigzag line across the page: down, up, down, up. Keep every point at the same height!', `<path d="${zig(0)}"/>`),
+    S('Many zigzags', 'Draw more zigzags underneath, each one the same, stacked like steps.', `<path d="${Array.from({ length: 9 }, (_, k) => zig(k + 1)).join(' ')}"/>`),
+    S('Color the bands', 'Color every other band. The stripes seem to wave and move! 🤯', `<path d="${Array.from({ length: 10 }, (_, k) => zig(k)).join(' ')}"/>`, Array.from({ length: 9 }, (_, k) => k % 2 ? '' : `<path fill="${BR}" d="${zigBand(k)}"/>`).join(''))]),
+);
+
 // ---------- More 3D perspective
 const rP = isoP(150, 150, 44);
 const rFloor = poly([rP(0, 0, 0), rP(3, 0, 0), rP(3, 3, 0), rP(0, 3, 0)]);
@@ -425,4 +552,7 @@ const PERSP = [
 const GROUPS2 = [['👧 Girls', GIRLS], ['🧱 Blocky characters', BLOCKY], ['🧊 3D blocky characters', BLOCKY3D], ['🐷 Blocky animals & things', BLOCKY2], ['🟦 Pixel art (on a grid)', PIXEL], ['🎀 Girly things', GIRLY], ['🐼 Cute animals', CUTE],
   ['🐱 Animals, nature & more', THINGS], ['🧊 3D, light & shadow', [...SOLID, ...SOLID2, ...PERSP]], ['🌀 Optical illusions (lines & boxes)', ILLU], ['⭐ Advanced (for big kids)', ADV]];
 ITEMS = GROUPS2.flatMap(([, list]) => list);
-$('grid').innerHTML = GROUPS2.map(([title, list]) => `<h2 class="group">${title}</h2><div class="grid">${list.map(card).join('')}</div>`).join('');
+$('grid').innerHTML = GROUPS2.map(([title, list]) => `<h2 class="group">${title.replace(/^[^\p{L}]+/u, '')}</h2><div class="grid">${list.map(card).join('')}</div>`).join('');
+const thumbs = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; thumbs.unobserve(e.target);
+  const g = ITEMS[+e.target.dataset.i]; NOFX = true; try { e.target.innerHTML = finished(g); } finally { NOFX = false; } }), { rootMargin: '600px' });
+document.querySelectorAll('.pick svg').forEach(s => thumbs.observe(s));
