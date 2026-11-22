@@ -260,7 +260,7 @@ function finished(g) {
 }
 // Step i: earlier parts gray, the new part pink.
 // (Advanced: each part gets a white fill so lines behind it are hidden, just like on paper.)
-const partial = (g, i) => pencilG(g.adv ? layered(g, i, (s, j) => ((s.back || '') + (s.front || '')).replace(/fill="[^"]*"/g, 'fill="#fffef9"') + `<g class="${j === i ? 'new' : 'old'}">${s.svg}</g>`) : g.steps.slice(0, i + 1).map((s, j) => `<g class="${j === i ? 'new' : 'old'}">${s.svg}</g>`).join(''));
+const partial = (g, i) => pencilG(g.adv ? layered(g, i, (s, j) => (g.keepFill ? (s.back || '') + (s.front || '') : ((s.back || '') + (s.front || '')).replace(/fill="[^"]*"/g, 'fill="#fffef9"')) + `<g class="${j === i ? 'new' : 'old'}">${s.svg}</g>`) : g.steps.slice(0, i + 1).map((s, j) => `<g class="${j === i ? 'new' : 'old'}">${s.svg}</g>`).join(''));
 
 // ---------- Lesson (the home screen is built in things.js, after all pictures exist)
 const demo = $('demo');
