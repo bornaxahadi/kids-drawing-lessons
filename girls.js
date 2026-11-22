@@ -8,27 +8,29 @@ const TPL = {
     cheekY:200, cheekDX:46, nx0:132, nx1:168, ny:282,
     head:{ t:'A big oval', tip:'Draw a big egg shape for the head. Wobbly is okay!', svg:'<ellipse cx="150" cy="160" rx="80" ry="92"/>' },
     headFill:'<ellipse fill="@S" cx="150" cy="160" rx="80" ry="92"/>',
-    guide:'M150 72 V250 M72 168 H228', ears:['M72 158 q-20 16 2 38', 'M228 158 q20 16 -2 38'],
+    guide:'M150 54 V270 M54 168 H246 M116 190 H184 M124 214 H176', ticks:'M144 54 H156 M144 270 H156 M54 162 V174 M246 162 V174', ears:['M72 158 q-20 16 2 38', 'M228 158 q20 16 -2 38'],
     neck:{ t:'Neck and shoulders', tip:'Two short lines down, then curve out like a slide.', svg:'<path d="M132 248 V282 Q92 286 70 330"/><path d="M168 248 V282 Q208 286 230 330"/>' },
     skinNeck:'M132 230 H168 V284 H132Z', body:'M70 330 Q92 286 132 282 H168 Q208 286 230 330Z' },
   chibi: { L:52, R:248, y:150, top:54, cy:150, ry:86, ey:170, edx:42, er:17, nose:null, my:206, mw:13,
     cheekY:196, cheekDX:64, nx0:138, nx1:162, ny:246,
     head:{ t:'A big round head', tip:'A big, wide circle. Chibi girls have BIG heads!', svg:'<ellipse cx="150" cy="150" rx="98" ry="86"/>' },
     headFill:'<ellipse fill="@S" cx="150" cy="150" rx="98" ry="86"/>',
-    guide:'M150 66 V234 M54 170 H246', ears:['M53 146 q-18 14 2 32', 'M247 146 q18 14 -2 32'],
+    guide:'M150 48 V252 M36 170 H264 M130 206 H170', ticks:'M144 48 H156 M144 252 H156 M36 164 V176 M264 164 V176', ears:['M53 146 q-18 14 2 32', 'M247 146 q18 14 -2 32'],
     neck:{ t:'A little dress', tip:'A tiny neck, then a dress shaped like a bell! 🔔', svg:'<path d="M138 232 V246 Q110 250 104 280 L92 340 H208 L196 280 Q190 250 162 246 V232"/>' },
     skinNeck:'M138 220 H162 V248 H138Z', body:'M138 246 Q110 250 104 280 L92 340 H208 L196 280 Q190 250 162 246Z' },
   anime: { L:70, R:230, y:150, top:54, cy:160, ry:98, ey:174, edx:36, er:14, nose:'tiny', noseY:204, my:228, mw:10,
     cheekY:210, cheekDX:50, nx0:138, nx1:162, ny:284,
     head:{ t:'Head shape', tip:'A round top, then come down to a soft point for the chin.', svg:`<path d="${ANIME_HEAD}"/>` },
     headFill:`<path fill="@S" d="${ANIME_HEAD}"/>`,
-    guide:'M150 66 V256 M72 174 H228', ears:['M71 152 q-18 14 4 34', 'M229 152 q18 14 -4 34'],
+    guide:'M150 48 V276 M54 174 H246 M124 206 H176 M128 228 H172', ticks:'M144 48 H156 M144 276 H156 M54 168 V180 M246 168 V180', ears:['M71 152 q-18 14 4 34', 'M229 152 q18 14 -4 34'],
     neck:{ t:'Neck and shoulders', tip:'A thin neck, then curve out for the shoulders.', svg:'<path d="M138 252 V284 Q96 288 70 330"/><path d="M162 252 V284 Q204 288 230 330"/>' },
     skinNeck:'M138 236 H162 V286 H138Z', body:'M70 330 Q96 288 138 284 H162 Q204 288 230 330Z' },
 };
 
 // ---------- Eyes (with colored middles and eyebrows), nose, mouth
 const INK = '#2a1a33';
+const LINE = '#3b3b44'; // graphite pencil
+const pencilG = s => `<g filter="url(#pencil)">${s}</g>`, markerG = s => `<g filter="url(#marker)" opacity=".93">${s}</g>`;
 function EYES(T, kind, iris) {
   const y = T.ey, r = T.er, both = f => f(150 - T.edx, -1) + f(150 + T.edx, 1);
   const brow = (x, s, lift) => `<path d="M${x - 12} ${y - lift} Q${x + s * 2} ${y - lift - 7} ${x + 12} ${y - lift}"/>`;
@@ -40,7 +42,7 @@ function EYES(T, kind, iris) {
     svg: both((x, s) => `<g class="fade" stroke="none"><ellipse fill="#fff" cx="${x}" cy="${y}" rx="${r}" ry="${r * 1.3}"/>
       <ellipse fill="${iris}" cx="${x}" cy="${y + r * .2}" rx="${r * .8}" ry="${r * 1.05}"/><ellipse fill="${INK}" cx="${x}" cy="${y + r * .25}" rx="${r * .42}" ry="${r * .6}"/>
       <circle fill="#fff" cx="${x - r * .32}" cy="${y - r * .3}" r="${r * .32}"/><circle fill="#fff" cx="${x + r * .35}" cy="${y + r * .6}" r="${r * .15}"/></g>
-      <ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 1.3}"/><path stroke-width="8" d="M${x - r - 4} ${y - r * .8} Q${x} ${y - r * 1.75} ${x + r + 4} ${y - r * .8}"/>
+      <ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 1.3}"/><path stroke-width="4.5" d="M${x - r - 4} ${y - r * .8} Q${x} ${y - r * 1.75} ${x + r + 4} ${y - r * .8}"/>
       <path d="M${x + s * (r + 4)} ${y - r * .8} l${s * 8} -4"/>${brow(x, s, r * 1.3 + 16)}`) };
   if (kind === 'kawaii') return { t:'Big shiny eyes', tip:'Big dark ovals with two white shines. So cute!',
     svg: both((x, s) => `<g class="fade" stroke="none"><ellipse fill="${INK}" cx="${x}" cy="${y}" rx="${r * .75}" ry="${r}"/>
@@ -206,7 +208,7 @@ const C = {
 // ---------- The girls
 function girl(name, style, tpl, colors, eyes, iris, mouth, extras) {
   const T = TPL[tpl];
-  const steps = [T.head, { t:'Helper lines', tip:'One soft line down the middle, and one across where the eyes go.', svg:`<path class="guide" d="${T.guide}"/>`, guide:true },
+  const steps = [T.head, { t:'Guidelines', tip:'Draw very light lines: one down the middle, one across for the eyes, and two short ones for the nose and mouth. They help you place everything!', svg:`<path class="guide" d="${T.guide}"/><path class="guide solid" d="${T.ticks}"/>`, guide:true },
     { t:'Two ears', tip:'A little C on each side.', svg:T.ears.map(d => `<path d="${d}"/>`).join('') }, T.neck,
     EYES(T, eyes, iris), ...(T.nose ? [NOSE(T)] : []), MOUTH(T, mouth), ...extras.flatMap(f => f(T))];
   return { name, style, tpl, ...colors, steps };
@@ -228,7 +230,7 @@ const GIRLS = [
   girl('Coco', 'Cozy hat', 'classic', { skin:'#8d5a3b', hair:'#2b1b17', acc:'#ff6fae', shirt:'#ffd23f', bg:'#ffe6ee' }, 'happy', '#000', 'laugh', [A.hat]),
   girl('Sunny', 'Anime · freckles', 'anime', { skin:'#ffe0c9', hair:'#d9542b', acc:'#ffd23f', shirt:'#3fb6e8', bg:'#fff1dc' }, 'anime', '#3f8f5a', 'laugh', [H.shortWavy, A.headband, A.freckles]),
 ];
-const FINAL = { t:'Color her in!', tip:'Erase the helper lines and color her with your crayons. You did it, Dayan! 🌟', final:true };
+const FINAL = { t:'Color her in!', tip:'Erase the guidelines and color her with your crayons. You did it, Dayan! 🌟', final:true };
 
 // ---------- Drawing the picture
 const $ = id => document.getElementById(id);
@@ -248,17 +250,17 @@ function layered(g, upto, chunk) {
 }
 function finished(g) {
   const T = TPL[g.tpl], s = g.steps, bg = `<circle cx="150" cy="170" r="146" fill="${g.bg}"/>`;
-  if (g.adv) return bg + layered(g, s.length - 1, x => (x.back || '') + (x.front || '') + `<g class="done" stroke="${INK}">${x.guide ? '' : x.svg}</g>`);
-  if (!T) return bg + s.map(x => x.back).join('') + s.map(x => x.front).join('') + `<g class="done" stroke="${INK}">${s.map(x => x.svg).join('')}</g>`;
-  return paint(g, bg + s.map(x => x.back).join('') +
+  if (g.adv) return markerG(bg) + layered(g, s.length - 1, x => markerG((x.back || '') + (x.front || '')) + pencilG(`<g class="done" stroke="${LINE}">${x.guide ? '' : x.svg}</g>`));
+  if (!T) return markerG(bg + s.map(x => x.back).join('') + s.map(x => x.front).join('')) + pencilG(`<g class="done" stroke="${LINE}">${s.map(x => x.svg).join('')}</g>`);
+  return paint(g, markerG(bg + s.map(x => x.back).join('') +
     `<path fill="@S" d="${T.skinNeck}"/><path fill="@C" d="${T.body}"/><path fill="@S" d="${T.ears.map(d => d + 'Z').join(' ')}"/>${T.headFill}
      <g fill="#ff7fb0" opacity=".35"><circle cx="${150 - T.cheekDX}" cy="${T.cheekY}" r="11"/><circle cx="${150 + T.cheekDX}" cy="${T.cheekY}" r="11"/></g>` +
-    s.map(x => x.front).join('') +
-    `<g class="done" stroke="${INK}">${s.filter(x => !x.guide).map(x => x.svg).join('')}</g>`);
+    s.map(x => x.front).join('')) +
+    pencilG(`<g class="done" stroke="${LINE}">${s.filter(x => !x.guide).map(x => x.svg).join('')}</g>`));
 }
 // Step i: earlier parts gray, the new part pink.
 // (Advanced: each part gets a white fill so lines behind it are hidden, just like on paper.)
-const partial = (g, i) => g.adv ? layered(g, i, (s, j) => ((s.back || '') + (s.front || '')).replace(/fill="[^"]*"/g, 'fill="#fff"') + `<g class="${j === i ? 'new' : 'old'}">${s.svg}</g>`) : g.steps.slice(0, i + 1).map((s, j) => `<g class="${j === i ? 'new' : 'old'}">${s.svg}</g>`).join('');
+const partial = (g, i) => pencilG(g.adv ? layered(g, i, (s, j) => ((s.back || '') + (s.front || '')).replace(/fill="[^"]*"/g, 'fill="#fffef9"') + `<g class="${j === i ? 'new' : 'old'}">${s.svg}</g>`) : g.steps.slice(0, i + 1).map((s, j) => `<g class="${j === i ? 'new' : 'old'}">${s.svg}</g>`).join(''));
 
 // ---------- Lesson (the home screen is built in things.js, after all pictures exist)
 const demo = $('demo');
@@ -277,8 +279,8 @@ function playDemo() {
   const last = step === steps.length - 1;
   demo.innerHTML = (last ? finished(cur) : partial(cur, step)) +
     `<g id="pencil" style="display:none" stroke="none"><g transform="rotate(-45) scale(1.3)">
-      <polygon points="0,0 10,-5 10,5" fill="#ffd9a0"/><polygon points="0,0 3.5,-1.75 3.5,1.75" fill="#4a2c5e"/>
-      <rect x="10" y="-5" width="32" height="10" fill="#ffd23f"/><rect x="42" y="-5" width="8" height="10" rx="2" fill="#ff8fc0"/></g></g>`;
+      <polygon points="0,0 10,-4 10,4" fill="#f1d3a3"/><polygon points="0,0 3.5,-1.4 3.5,1.4" fill="#e0457b"/>
+      <rect x="10" y="-4" width="34" height="8" fill="#e8b93a"/><rect x="10" y="-4" width="34" height="2" fill="#f6d366"/><rect x="44" y="-4" width="6" height="8" rx="1.5" fill="#d9d4cc"/></g></g>`;
   if (last) return party();
   const lines = [...demo.querySelectorAll('.new > :is(path, circle, ellipse)')];
   const pencil = $('pencil');
@@ -286,13 +288,13 @@ function playDemo() {
   let i = 0, t0 = performance.now() + 300;
   const frame = now => {
     const el = lines[i]; if (!el) { pencil.style.display = 'none'; return; }
-    const dur = Math.max(900, el._len * 11), k = Math.max(0, Math.min(1, (now - t0) / dur));
+    const dur = Math.max(900, Math.min(3200, el._len * 11)), k = Math.max(0, Math.min(1, (now - t0) / dur));
     const d = el._len * (k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2); // ease in-out
     el.style.strokeDashoffset = el._len - d;
     const p = el.getPointAtLength(d), tm = el.transform.baseVal.consolidate();
     const pt = tm ? p.matrixTransform(tm.matrix) : p; // follow rotated shapes too
     pencil.style.display = ''; pencil.setAttribute('transform', `translate(${pt.x} ${pt.y})`);
-    if (k >= 1) { i++; t0 = now + 300; }
+    if (k >= 1) { el.style.strokeDasharray = ''; el.style.strokeDashoffset = ''; i++; t0 = now + 300; }
     anim = requestAnimationFrame(frame);
   };
   anim = requestAnimationFrame(frame);
